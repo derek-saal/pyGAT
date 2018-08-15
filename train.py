@@ -13,10 +13,11 @@ import glob
 from torch.autograd import Variable
 
 from utils import load_data, accuracy
-from models import GAT
+from models import GAT, GCN
 
 # Training settings
 parser = argparse.ArgumentParser()
+parser.add_argument('--model', action='model', default='GAT', help='GAT or GCN.')
 parser.add_argument('--no-cuda', action='store_true', default=False, help='Disables CUDA training.')
 parser.add_argument('--fastmode', action='store_true', default=False, help='Validate during training pass.')
 parser.add_argument('--seed', type=int, default=42, help='Random seed.')
@@ -29,7 +30,7 @@ parser.add_argument('--dropout', type=float, default=0.6, help='Dropout rate (1 
 parser.add_argument('--alpha', type=float, default=0.2, help='Alpha for the leaky_relu.')
 parser.add_argument('--patience', type=int, default=100, help='Patience')
 
-args = parser.parse_args()
+args = parser.parse_args(['--model', 'GCN'])
 
 args.cuda = not args.no_cuda and torch.cuda.is_available()
 
@@ -43,7 +44,19 @@ if args.cuda:
 adj, features, labels, idx_train, idx_val, idx_test = load_data()
 
 # Model and optimizer
-model = GAT(nfeat=features.shape[1], nhid=args.hidden, nclass=int(labels.max()) + 1, dropout=args.dropout, nheads=args.nb_heads, alpha=args.alpha)
+
+if args.model == 'GAT':
+    model = GAT(nfeat=features.shape[1],
+                nhid=args.hidden,
+                nclass=int(labels.max()) + 1,
+                dropout=args.dropout,
+                nheads=args.nb_heads,
+                alpha=args.alpha)
+elif args.model == 'GCN':
+    ...
+else:
+    raise ValueError("Model {} not registered".format(args.model))
+
 optimizer = optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
 
 if args.cuda:
@@ -96,15 +109,6 @@ def compute_test():
           "accuracy= {:.4f}".format(acc_test.data.item()))
 
 
-def accuracy_per_node_degree():
-    model.eval()
-    output = model(features, adj)
-    degrees = adj.ceil().sum(dim=1)[idx_test]
-    preds = output.max(1)[1].type_as(labels)
-    correct = preds.eq(labels).double()[idx_test]
-    return degrees, correct
-
-
 # Train model
 t_total = time.time()
 loss_values = []
@@ -112,11 +116,9 @@ bad_counter = 0
 best = args.epochs + 1
 best_epoch = 0
 for epoch in range(args.epochs):
-
-
     loss_values.append(train(epoch))
 
-    torch.save(model.state_dict(), '{}.pkl'.format(epoch))
+    torch.save(model.state_dict(), '{}_{}.pkl'.format(model._get_name(), epoch))
     if loss_values[-1] < best:
         best = loss_values[-1]
         best_epoch = epoch
@@ -133,7 +135,7 @@ for epoch in range(args.epochs):
         if epoch_nb < best_epoch:
             os.remove(file)
 
-files = glob.glob('*.pkl')
+files = glob.glob('{}_*.pkl'.format(model._get_name()))
 for file in files:
     epoch_nb = int(file.split('.')[0])
     if epoch_nb > best_epoch:
@@ -144,7 +146,7 @@ print("Total time elapsed: {:.4f}s".format(time.time() - t_total))
 
 # Restore best model
 print('Loading {}th epoch'.format(best_epoch))
-model.load_state_dict(torch.load('{}.pkl'.format(best_epoch)))
+model.load_state_dict(torch.load('{}_{}.pkl'.format(model._get_name(), best_epoch)))
 
 # Testing
 compute_test()
