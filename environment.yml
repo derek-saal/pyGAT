@@ -1,0 +1,13 @@
+name: env_pygat
+
+dependencies:
+  - python>=3.6
+  # Packages
+  - pip
+  # Testing
+  - pytest
+  - pip:
+    - pytorch
+    - torchvision
+    - scipy
+    - numpy

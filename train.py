@@ -29,7 +29,9 @@ parser.add_argument('--dropout', type=float, default=0.6, help='Dropout rate (1 
 parser.add_argument('--alpha', type=float, default=0.2, help='Alpha for the leaky_relu.')
 parser.add_argument('--patience', type=int, default=100, help='Patience')
 
-args = parser.parse_args()
+# args = parser.parse_args()
+args = parser.parse_args(['--epochs', '5'])
+
 args.cuda = not args.no_cuda and torch.cuda.is_available()
 
 random.seed(args.seed)
@@ -76,13 +78,13 @@ def train(epoch):
     loss_val = F.nll_loss(output[idx_val], labels[idx_val])
     acc_val = accuracy(output[idx_val], labels[idx_val])
     print('Epoch: {:04d}'.format(epoch+1),
-          'loss_train: {:.4f}'.format(loss_train.data[0]),
-          'acc_train: {:.4f}'.format(acc_train.data[0]),
-          'loss_val: {:.4f}'.format(loss_val.data[0]),
-          'acc_val: {:.4f}'.format(acc_val.data[0]),
+          'loss_train: {:.4f}'.format(loss_train.data.item()),
+          'acc_train: {:.4f}'.format(acc_train.data.item()),
+          'loss_val: {:.4f}'.format(loss_val.data.item()),
+          'acc_val: {:.4f}'.format(acc_val.data.item()),
           'time: {:.4f}s'.format(time.time() - t))
 
-    return loss_val.data[0]
+    return loss_val.data.item()
 
 
 def compute_test():
@@ -91,8 +93,17 @@ def compute_test():
     loss_test = F.nll_loss(output[idx_test], labels[idx_test])
     acc_test = accuracy(output[idx_test], labels[idx_test])
     print("Test set results:",
-          "loss= {:.4f}".format(loss_test.data[0]),
-          "accuracy= {:.4f}".format(acc_test.data[0]))
+          "loss= {:.4f}".format(loss_test.data.item()),
+          "accuracy= {:.4f}".format(acc_test.data.item()))
+
+
+def accuracy_per_node_degree():
+    model.eval()
+    output = model(features, adj)
+    degrees = adj.ceil().sum(dim=1)[idx_test]
+    preds = output.max(1)[1].type_as(labels)
+    correct = preds.eq(labels).double()[idx_test]
+    return degrees, correct
 
 
 # Train model
@@ -102,6 +113,8 @@ bad_counter = 0
 best = args.epochs + 1
 best_epoch = 0
 for epoch in range(args.epochs):
+
+
     loss_values.append(train(epoch))
 
     torch.save(model.state_dict(), '{}.pkl'.format(epoch))
@@ -121,11 +134,11 @@ for epoch in range(args.epochs):
         if epoch_nb < best_epoch:
             os.remove(file)
 
-files = glob.glob('*.pkl')
-for file in files:
-    epoch_nb = int(file.split('.')[0])
-    if epoch_nb > best_epoch:
-        os.remove(file)
+# files = glob.glob('*.pkl')
+# for file in files:
+#     epoch_nb = int(file.split('.')[0])
+#     if epoch_nb > best_epoch:
+#         os.remove(file)
 
 print("Optimization Finished!")
 print("Total time elapsed: {:.4f}s".format(time.time() - t_total))
@@ -136,3 +149,20 @@ model.load_state_dict(torch.load('{}.pkl'.format(best_epoch)))
 
 # Testing
 compute_test()
+degrees, correct = accuracy_per_node_degree()
+
+unique_degrees = np.unique(degrees)
+degree_counter = np.zeros(len(unique_degrees))
+correct_counter = np.zeros(len(unique_degrees))
+degree_to_index = dict((k, v) for k, v in zip(np.unique(degrees), range(len(unique_degrees))))
+for i, deg in enumerate(degrees.numpy()):
+    index = degree_to_index[deg]
+    degree_counter[index] += 1
+    correct_counter[index] += int(correct.numpy()[i])
+
+correct_sores = np.nan_to_num(correct_counter / degree_counter)
+
+import matplotlib.pyplot as plt
+
+plt.scatter(unique_degrees, correct_sores)
+plt.show()
