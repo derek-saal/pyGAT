@@ -88,27 +88,26 @@ def accuracy_per_node_degree():
     degrees = adj.ceil().sum(dim=1)[idx_test]
     preds = output.max(1)[1].type_as(labels)
     correct = preds.eq(labels).double()[idx_test]
-    return degrees, correct
+
+    # Restore best model
+    best_epoch = 754
+    print('Loading {}th epoch...'.format(best_epoch))
+    model.load_state_dict(torch.load('{}.pkl'.format(best_epoch), map_location='cpu'))
+
+    # Perform experiment
+    unique_degrees = np.unique(degrees)
+    degree_counter = np.zeros(len(unique_degrees))
+    correct_counter = np.zeros(len(unique_degrees))
+    degree_to_index = dict((k, v) for k, v in zip(np.unique(degrees), range(len(unique_degrees))))
+    for i, deg in enumerate(degrees.numpy()):
+        index = degree_to_index[deg]
+        degree_counter[index] += 1
+        correct_counter[index] += int(correct.numpy()[i])
+
+    return unique_degrees, degree_counter, correct_counter
 
 
-# Restore best model
-best_epoch = 649
-print('Loading {}th epoch...'.format(best_epoch))
-model.load_state_dict(torch.load('{}.pkl'.format(best_epoch), map_location='cpu'))
-
-# Testing
-compute_test()
-degrees, correct = accuracy_per_node_degree()
-
-# Perform experiment
-unique_degrees = np.unique(degrees)
-degree_counter = np.zeros(len(unique_degrees))
-correct_counter = np.zeros(len(unique_degrees))
-degree_to_index = dict((k, v) for k, v in zip(np.unique(degrees), range(len(unique_degrees))))
-for i, deg in enumerate(degrees.numpy()):
-    index = degree_to_index[deg]
-    degree_counter[index] += 1
-    correct_counter[index] += int(correct.numpy()[i])
+unique_degrees, degree_counter, correct_counter = accuracy_per_node_degree()
 
 correct_sores = np.nan_to_num(correct_counter / degree_counter)
 
