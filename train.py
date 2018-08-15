@@ -53,7 +53,10 @@ if args.model == 'GAT':
                 nheads=args.nb_heads,
                 alpha=args.alpha)
 elif args.model == 'GCN':
-    ...
+    model = GCN(nfeat=features.shape[1],
+                nhid=args.hidden,
+                nclass=int(labels.max()) + 1,
+                dropout=args.dropout)
 else:
     raise ValueError("Model {} not registered".format(args.model))
 
