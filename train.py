@@ -17,7 +17,7 @@ from models import GAT, GCN
 
 # Training settings
 parser = argparse.ArgumentParser()
-parser.add_argument('--model', action='model', default='GAT', help='GAT or GCN.')
+parser.add_argument('--model', type=str, default='GAT', help='GAT or GCN.')
 parser.add_argument('--no-cuda', action='store_true', default=False, help='Disables CUDA training.')
 parser.add_argument('--fastmode', action='store_true', default=False, help='Validate during training pass.')
 parser.add_argument('--seed', type=int, default=42, help='Random seed.')
