@@ -73,7 +73,12 @@ features, adj, labels = Variable(features), Variable(adj), Variable(labels)
 
 
 def compute_test():
+    # Restore best model
+    best_epoch = 754
+    print('Loading {}th epoch...'.format(best_epoch))
+    model.load_state_dict(torch.load('{}.pkl'.format(best_epoch), map_location='cpu'))
     model.eval()
+    # Compute accuracy
     output = model(features, adj)
     loss_test = F.nll_loss(output[idx_test], labels[idx_test])
     acc_test = accuracy(output[idx_test], labels[idx_test])
@@ -83,16 +88,17 @@ def compute_test():
 
 
 def accuracy_per_node_degree():
-    model.eval()
-    output = model(features, adj)
-    degrees = adj.ceil().sum(dim=1)[idx_test]
-    preds = output.max(1)[1].type_as(labels)
-    correct = preds.eq(labels).double()[idx_test]
-
     # Restore best model
     best_epoch = 754
     print('Loading {}th epoch...'.format(best_epoch))
     model.load_state_dict(torch.load('{}.pkl'.format(best_epoch), map_location='cpu'))
+    model.eval()
+
+    # Compute preds
+    output = model(features, adj)
+    degrees = adj.ceil().sum(dim=1)[idx_test]
+    preds = output.max(1)[1].type_as(labels)
+    correct = preds.eq(labels).double()[idx_test]
 
     # Perform experiment
     unique_degrees = np.unique(degrees)
@@ -111,5 +117,23 @@ unique_degrees, degree_counter, correct_counter = accuracy_per_node_degree()
 
 correct_sores = np.nan_to_num(correct_counter / degree_counter)
 
+compute_test()
+
 plt.scatter(unique_degrees, correct_sores)
 plt.show()
+
+"""
+correct_sores = [0.76506024, 0.81818182, 0.86956522, 0.83673469, 0.90566038,
+                 0.83928571, 0.89189189, 0.92857143, 0.8       , 0.9375    ,
+                 0.85714286, 0.85714286, 1.        , 1.        , 1.        ,
+                 0.        , 1.        , 0.5       , 1.        , 1.        ,
+                 1.        , 1.        , 0.5       , 1.        , 1.        ,
+                 0.        , 1.        , 1.        , 1.        , 1.        ]
+"""
+
+correct_sores = [0.76506024, 0.81818182, 0.86956522, 0.83673469, 0.90566038,
+                 0.83928571, 0.89189189, 0.92857143, 0.8       , 0.9375    ,
+                 0.85714286, 0.85714286, 1.        , 1.        , 1.        ,
+                 0.        , 1.        , 0.5       , 1.        , 1.        ,
+                 1.        , 1.        , 0.5       , 1.        , 1.        ,
+                 0.        , 1.        , 1.        , 1.        , 1.        ]
