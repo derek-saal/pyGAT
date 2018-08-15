@@ -29,8 +29,7 @@ parser.add_argument('--dropout', type=float, default=0.6, help='Dropout rate (1 
 parser.add_argument('--alpha', type=float, default=0.2, help='Alpha for the leaky_relu.')
 parser.add_argument('--patience', type=int, default=100, help='Patience')
 
-# args = parser.parse_args()
-args = parser.parse_args(['--epochs', '5'])
+args = parser.parse_args()
 
 args.cuda = not args.no_cuda and torch.cuda.is_available()
 
@@ -149,20 +148,3 @@ model.load_state_dict(torch.load('{}.pkl'.format(best_epoch)))
 
 # Testing
 compute_test()
-degrees, correct = accuracy_per_node_degree()
-
-unique_degrees = np.unique(degrees)
-degree_counter = np.zeros(len(unique_degrees))
-correct_counter = np.zeros(len(unique_degrees))
-degree_to_index = dict((k, v) for k, v in zip(np.unique(degrees), range(len(unique_degrees))))
-for i, deg in enumerate(degrees.numpy()):
-    index = degree_to_index[deg]
-    degree_counter[index] += 1
-    correct_counter[index] += int(correct.numpy()[i])
-
-correct_sores = np.nan_to_num(correct_counter / degree_counter)
-
-import matplotlib.pyplot as plt
-
-plt.scatter(unique_degrees, correct_sores)
-plt.show()

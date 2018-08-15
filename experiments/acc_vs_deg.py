@@ -93,7 +93,7 @@ def accuracy_per_node_degree():
 
 # Restore best model
 best_epoch = 649
-print('Loading {}th epoch'.format(best_epoch))
+print('Loading {}th epoch...'.format(best_epoch))
 model.load_state_dict(torch.load('{}.pkl'.format(best_epoch), map_location='cpu'))
 
 # Testing
