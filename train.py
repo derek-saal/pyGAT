@@ -102,16 +102,6 @@ def train(epoch):
     return loss_val.data.item()
 
 
-def compute_test():
-    model.eval()
-    output = model(features, adj)
-    loss_test = F.nll_loss(output[idx_test], labels[idx_test])
-    acc_test = accuracy(output[idx_test], labels[idx_test])
-    print("Test set results:",
-          "loss= {:.4f}".format(loss_test.data.item()),
-          "accuracy= {:.4f}".format(acc_test.data.item()))
-
-
 # Train model
 t_total = time.time()
 loss_values = []
@@ -132,7 +122,7 @@ for epoch in range(args.epochs):
     if bad_counter == args.patience:
         break
 
-    files = glob.glob('*.pkl')
+    files = glob.glob('{}_*.pkl'.format(model._get_name()))
     for file in files:
         epoch_nb = int(''.join(filter(str.isdigit, file)))
         if epoch_nb < best_epoch:
@@ -146,10 +136,3 @@ for file in files:
 
 print("Optimization Finished!")
 print("Total time elapsed: {:.4f}s".format(time.time() - t_total))
-
-# Restore best model
-print('Loading {}th epoch'.format(best_epoch))
-model.load_state_dict(torch.load('{}_{}.pkl'.format(model._get_name(), best_epoch)))
-
-# Testing
-compute_test()

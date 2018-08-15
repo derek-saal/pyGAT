@@ -86,7 +86,11 @@ def compute_test():
 
 # Load model
 filename = glob.glob("{}_*.pkl".format(model._get_name()))[0]
-model.load_state_dict(torch.load(filename, map_location='cpu'))
+if args.cuda:
+    model_location = 'cuda'
+else:
+    model_location = 'cpu'
+model.load_state_dict(torch.load(filename, map_location=model_location))
 model.eval()
 print('Loaded {}.'.format(filename))
 
