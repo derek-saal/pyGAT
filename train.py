@@ -12,12 +12,20 @@ import os
 import glob
 from torch.autograd import Variable
 
+import gcn_utils
 from utils import load_data, accuracy
 from models import GAT, GCN
+
+"""
+python3 train.py --model GCN --dataset cora --epochs 200 --lr 0.01 --weight_decay 5e-4 --hidden 16 --dropout 0.5
+python3 train.py --model GCN --dataset citeseer --epochs 200 --lr 0.01 --weight_decay 5e-4 --hidden 16 --dropout 0.5
+python3 train.py --model GCN --dataset pubmed --epochs 200 --lr 0.01 --weight_decay 5e-4 --hidden 16 --dropout 0.5
+"""
 
 # Training settings
 parser = argparse.ArgumentParser()
 parser.add_argument('--model', type=str, default='GAT', help='GAT or GCN.')
+parser.add_argument('--dataset', type=str, default='cora', help='GAT or GCN.')
 parser.add_argument('--no-cuda', action='store_true', default=False, help='Disables CUDA training.')
 parser.add_argument('--fastmode', action='store_true', default=False, help='Validate during training pass.')
 parser.add_argument('--seed', type=int, default=42, help='Random seed.')
@@ -30,7 +38,7 @@ parser.add_argument('--dropout', type=float, default=0.6, help='Dropout rate (1 
 parser.add_argument('--alpha', type=float, default=0.2, help='Alpha for the leaky_relu.')
 parser.add_argument('--patience', type=int, default=100, help='Patience')
 
-args = parser.parse_args()
+args = parser.parse_args([])
 
 args.cuda = not args.no_cuda and torch.cuda.is_available()
 
@@ -41,7 +49,7 @@ if args.cuda:
     torch.cuda.manual_seed(args.seed)
 
 # Load data
-adj, features, labels, idx_train, idx_val, idx_test = load_data()
+adj, features, labels, idx_train, idx_val, idx_test = gcn_utils.load_data(args.dataset)
 
 # Model and optimizer
 
@@ -111,7 +119,7 @@ best_epoch = 0
 for epoch in range(args.epochs):
     loss_values.append(train(epoch))
 
-    torch.save(model.state_dict(), '{}_{}.pkl'.format(model._get_name(), epoch))
+    torch.save(model.state_dict(), '{}_{}_{}.pkl'.format(model._get_name(), args.dataset, epoch))
     if loss_values[-1] < best:
         best = loss_values[-1]
         best_epoch = epoch
@@ -122,13 +130,13 @@ for epoch in range(args.epochs):
     if bad_counter == args.patience:
         break
 
-    files = glob.glob('{}_*.pkl'.format(model._get_name()))
+    files = glob.glob('{}_{}_*.pkl'.format(model._get_name(), args.dataset))
     for file in files:
         epoch_nb = int(''.join(filter(str.isdigit, file)))
         if epoch_nb < best_epoch:
             os.remove(file)
 
-files = glob.glob('{}_*.pkl'.format(model._get_name()))
+files = glob.glob('{}_{}_*.pkl'.format(model._get_name(), args.dataset))
 for file in files:
     epoch_nb = int(''.join(filter(str.isdigit, file)))
     if epoch_nb > best_epoch:
@@ -136,3 +144,16 @@ for file in files:
 
 print("Optimization Finished!")
 print("Total time elapsed: {:.4f}s".format(time.time() - t_total))
+
+
+def compute_test():
+    model.eval()
+    output = model(features, adj)
+    loss_test = F.nll_loss(output[idx_test], labels[idx_test])
+    acc_test = accuracy(output[idx_test], labels[idx_test])
+    print("Test set results:",
+          "loss= {:.4f}".format(loss_test.data.item()),
+          "accuracy= {:.4f}".format(acc_test.data.item()))
+
+
+compute_test()
