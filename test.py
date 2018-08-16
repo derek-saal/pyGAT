@@ -12,6 +12,7 @@ import os
 import glob
 from torch.autograd import Variable
 
+import gcn_utils
 from utils import load_data, accuracy
 from models import GAT, GCN
 
@@ -44,7 +45,7 @@ if args.cuda:
     torch.cuda.manual_seed(args.seed)
 
 # Load data
-adj, features, labels, idx_train, idx_val, idx_test = load_data()
+adj, features, labels, idx_train, idx_val, idx_test = gcn_utils.load_data(args.dataset)
 
 # Model and optimizer
 if args.model == 'GAT':

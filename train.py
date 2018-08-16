@@ -142,7 +142,7 @@ for epoch in range(args.epochs):
         if epoch_nb < best_epoch:
             os.remove(file)
 
-print('Saved model at {}_{}_{}.pkl'.format(model._get_name(), args.dataset, best_epoch))
+print('Saved model {}_{}_{}.pkl'.format(model._get_name(), args.dataset, best_epoch))
 
 files = glob.glob('{}_{}_*.pkl'.format(model._get_name(), args.dataset))
 for file in files:
