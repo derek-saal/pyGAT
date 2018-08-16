@@ -13,7 +13,7 @@ import glob
 from torch.autograd import Variable
 
 import gcn_utils
-from utils import load_data, accuracy
+from utils import accuracy
 from models import GAT, GCN
 
 """
