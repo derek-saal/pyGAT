@@ -77,6 +77,9 @@ def load_data(dataset_str):
     idx_train = range(len(y))
     idx_val = range(len(y), len(y)+500)
 
+    adj = preprocess_adj(adj)
+    features = preprocess_features(features)
+
     adj = torch.FloatTensor(np.array(adj.todense()))
     features = torch.FloatTensor(np.array(features.todense()))
     labels = torch.LongTensor(np.where(labels)[1])
