@@ -121,13 +121,13 @@ for epoch in range(args.epochs):
     loss_values.append(train(epoch))
 
     if loss_values[-1] < best:
-        torch.save(model.state_dict(), '{}_{}_{}.pkl'.format(model._get_name(), args.dataset, epoch))
+        torch.save(model.cpu().state_dict(), '{}_{}_{}.pkl'.format(model._get_name(), args.dataset, epoch))
         best = loss_values[-1]
         best_epoch = epoch
         bad_counter = 0
     else:
         bad_counter += 1
-
+        
     if bad_counter == args.patience:
         print("Patience {0} exceeded. Best in last {0} epochs is {1:.4f}.".format(args.patience, best))
         break
