@@ -17,9 +17,9 @@ from utils import accuracy
 from models import GAT, GCN
 
 """
-python3 train.py --model GCN --dataset cora --epochs 200 --lr 0.01 --weight_decay 5e-4 --hidden 16 --dropout 0.5
-python3 train.py --model GCN --dataset citeseer --epochs 200 --lr 0.01 --weight_decay 5e-4 --hidden 16 --dropout 0.5
-python3 train.py --model GCN --dataset pubmed --epochs 200 --lr 0.01 --weight_decay 5e-4 --hidden 16 --dropout 0.5
+python3 train.py --model GCN --dataset cora --epochs 10000 --lr 0.01 --weight_decay 5e-4 --hidden 16 --dropout 0.5
+python3 train.py --model GCN --dataset citeseer --epochs 10000 --lr 0.01 --weight_decay 5e-4 --hidden 16 --dropout 0.5
+python3 train.py --model GCN --dataset pubmed --epochs 10000 --lr 0.01 --weight_decay 5e-4 --hidden 16 --dropout 0.5
 """
 
 # Training settings
@@ -121,13 +121,17 @@ for epoch in range(args.epochs):
     loss_values.append(train(epoch))
 
     if loss_values[-1] < best:
-        torch.save(model.cpu().state_dict(), '{}_{}_{}.pkl'.format(model._get_name(), args.dataset, epoch))
+        if args.cuda:
+            model.cpu()
+        torch.save(model.state_dict(), '{}_{}_{}.pkl'.format(model._get_name(), args.dataset, epoch))
+        if args.cuda:
+            model.cuda()
         best = loss_values[-1]
         best_epoch = epoch
         bad_counter = 0
     else:
         bad_counter += 1
-        
+
     if bad_counter == args.patience:
         print("Patience {0} exceeded. Best in last {0} epochs is {1:.4f}.".format(args.patience, best))
         break
