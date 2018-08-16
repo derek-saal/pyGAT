@@ -114,7 +114,7 @@ def train(epoch):
 t_total = time.time()
 loss_values = []
 bad_counter = 0
-best = 0.0
+best = np.inf
 best_epoch = 0
 for epoch in range(args.epochs):
     loss_values.append(train(epoch))
@@ -128,6 +128,7 @@ for epoch in range(args.epochs):
         bad_counter += 1
 
     if bad_counter == args.patience:
+        print("Patience {0} exceeded. Best in last {0} epochs is {1}.".format(args.patience, best))
         break
 
     files = glob.glob('{}_{}_*.pkl'.format(model._get_name(), args.dataset))
