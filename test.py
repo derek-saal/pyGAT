@@ -45,7 +45,6 @@ if args.cuda:
 adj, features, labels, idx_train, idx_val, idx_test = load_data()
 
 # Model and optimizer
-
 if args.model == 'GAT':
     model = GAT(nfeat=features.shape[1],
                 nhid=args.hidden,
@@ -91,7 +90,8 @@ if args.cuda:
     model_location = 'cuda'
 else:
     model_location = 'cpu'
-model.load_state_dict(torch.load(filename, map_location=model_location))
+state_dict = torch.load(filename, map_location=model_location)
+model.load_state_dict(state_dict)
 model.eval()
 print('Loaded {}.'.format(filename))
 
