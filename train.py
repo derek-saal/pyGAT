@@ -120,8 +120,8 @@ best_epoch = 0
 for epoch in range(args.epochs):
     loss_values.append(train(epoch))
 
-    torch.save(model.state_dict(), '{}_{}_{}.pkl'.format(model._get_name(), args.dataset, epoch))
     if loss_values[-1] < best:
+        torch.save(model.state_dict(), '{}_{}_{}.pkl'.format(model._get_name(), args.dataset, epoch))
         best = loss_values[-1]
         best_epoch = epoch
         bad_counter = 0
@@ -137,6 +137,8 @@ for epoch in range(args.epochs):
         epoch_nb = int(''.join(filter(str.isdigit, file)))
         if epoch_nb < best_epoch:
             os.remove(file)
+
+print('Saved model at {}_{}_{}.pkl'.format(model._get_name(), args.dataset, best_epoch))
 
 files = glob.glob('{}_{}_*.pkl'.format(model._get_name(), args.dataset))
 for file in files:
