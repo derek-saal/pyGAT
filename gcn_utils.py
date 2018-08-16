@@ -116,6 +116,15 @@ def preprocess_features(features):
     r_inv = np.power(rowsum, -1).flatten()
     r_inv[np.isinf(r_inv)] = 0.
     r_mat_inv = sp.diags(r_inv)
+    return r_mat_inv.dot(features)
+
+
+def preprocess_features_and_convert_to_tuple(features):
+    """Row-normalize feature matrix and convert to tuple representation"""
+    rowsum = np.array(features.sum(1))
+    r_inv = np.power(rowsum, -1).flatten()
+    r_inv[np.isinf(r_inv)] = 0.
+    r_mat_inv = sp.diags(r_inv)
     features = r_mat_inv.dot(features)
     return sparse_to_tuple(features)
 
@@ -131,6 +140,11 @@ def normalize_adj(adj):
 
 
 def preprocess_adj(adj):
+    """Preprocessing of adjacency matrix for simple GCN model and conversion to tuple representation."""
+    return normalize_adj(adj + sp.eye(adj.shape[0]))
+
+
+def preprocess_adj_and_convert_to_tuple(adj):
     """Preprocessing of adjacency matrix for simple GCN model and conversion to tuple representation."""
     adj_normalized = normalize_adj(adj + sp.eye(adj.shape[0]))
     return sparse_to_tuple(adj_normalized)
