@@ -38,7 +38,8 @@ parser.add_argument('--dropout', type=float, default=0.6, help='Dropout rate (1 
 parser.add_argument('--alpha', type=float, default=0.2, help='Alpha for the leaky_relu.')
 parser.add_argument('--patience', type=int, default=100, help='Patience')
 
-args = parser.parse_args([])
+# args = parser.parse_args([])
+args = parser.parse_args()
 
 args.cuda = not args.no_cuda and torch.cuda.is_available()
 
@@ -128,7 +129,7 @@ for epoch in range(args.epochs):
         bad_counter += 1
 
     if bad_counter == args.patience:
-        print("Patience {0} exceeded. Best in last {0} epochs is {1}.".format(args.patience, best))
+        print("Patience {0} exceeded. Best in last {0} epochs is {1:.4f}.".format(args.patience, best))
         break
 
     files = glob.glob('{}_{}_*.pkl'.format(model._get_name(), args.dataset))
