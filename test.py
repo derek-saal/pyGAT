@@ -31,7 +31,9 @@ parser.add_argument('--dropout', type=float, default=0.6, help='Dropout rate (1 
 parser.add_argument('--alpha', type=float, default=0.2, help='Alpha for the leaky_relu.')
 parser.add_argument('--patience', type=int, default=100, help='Patience')
 
-args = parser.parse_args([])
+# For GCN
+# args = parser.parse_args(['--hidden', '16'])
+args = parser.parse_args()
 
 args.cuda = not args.no_cuda and torch.cuda.is_available()
 
@@ -86,6 +88,7 @@ def compute_test():
 
 # Load model
 filename = glob.glob('{}_{}_*.pkl'.format(model._get_name(), args.dataset))[0]
+print("Loading {}...".format(filename))
 if args.cuda:
     model_location = 'cuda'
 else:
@@ -97,3 +100,5 @@ print('Loaded {}.'.format(filename))
 
 # Testing
 compute_test()
+
+state_dict['gc1.weight']
