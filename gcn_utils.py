@@ -73,9 +73,9 @@ def load_data(dataset_str):
     labels = np.vstack((ally, ty))
     labels[test_idx_reorder, :] = labels[test_idx_range, :]
 
-    idx_test = test_idx_range.tolist()
     idx_train = range(len(y))
     idx_val = range(len(y), len(y)+500)
+    idx_test = test_idx_range.tolist()
 
     adj = preprocess_adj(adj)
     features = preprocess_features(features)
