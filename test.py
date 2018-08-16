@@ -17,7 +17,8 @@ from models import GAT, GCN
 
 # Training settings
 parser = argparse.ArgumentParser()
-parser.add_argument('--model', type=str, default='GAT', help='GAT or GCN.')
+parser.add_argument('--model', type=str, default='GCN', help='GAT or GCN.')
+parser.add_argument('--dataset', type=str, default='cora', help='GAT or GCN.')
 parser.add_argument('--no-cuda', action='store_true', default=False, help='Disables CUDA training.')
 parser.add_argument('--fastmode', action='store_true', default=False, help='Validate during training pass.')
 parser.add_argument('--seed', type=int, default=42, help='Random seed.')
@@ -30,7 +31,7 @@ parser.add_argument('--dropout', type=float, default=0.6, help='Dropout rate (1 
 parser.add_argument('--alpha', type=float, default=0.2, help='Alpha for the leaky_relu.')
 parser.add_argument('--patience', type=int, default=100, help='Patience')
 
-args = parser.parse_args()
+args = parser.parse_args([])
 
 args.cuda = not args.no_cuda and torch.cuda.is_available()
 
@@ -85,7 +86,7 @@ def compute_test():
 
 
 # Load model
-filename = glob.glob("{}_*.pkl".format(model._get_name()))[0]
+filename = glob.glob('{}_{}_*.pkl'.format(model._get_name(), args.dataset))[0]
 if args.cuda:
     model_location = 'cuda'
 else:

@@ -24,7 +24,7 @@ python3 train.py --model GCN --dataset pubmed --epochs 200 --lr 0.01 --weight_de
 
 # Training settings
 parser = argparse.ArgumentParser()
-parser.add_argument('--model', type=str, default='GAT', help='GAT or GCN.')
+parser.add_argument('--model', type=str, default='GCN', help='GAT or GCN.')
 parser.add_argument('--dataset', type=str, default='cora', help='GAT or GCN.')
 parser.add_argument('--no-cuda', action='store_true', default=False, help='Disables CUDA training.')
 parser.add_argument('--fastmode', action='store_true', default=False, help='Validate during training pass.')
@@ -107,21 +107,21 @@ def train(epoch):
           'acc_val: {:.4f}'.format(acc_val.data.item()),
           'time: {:.4f}s'.format(time.time() - t))
 
-    return loss_val.data.item()
+    return acc_val.data.item()
 
 
 # Train model
 t_total = time.time()
-loss_values = []
+acc_values = []
 bad_counter = 0
-best = args.epochs + 1
+best = 0.0
 best_epoch = 0
 for epoch in range(args.epochs):
-    loss_values.append(train(epoch))
+    acc_values.append(train(epoch))
 
     torch.save(model.state_dict(), '{}_{}_{}.pkl'.format(model._get_name(), args.dataset, epoch))
-    if loss_values[-1] < best:
-        best = loss_values[-1]
+    if acc_values[-1] > best:
+        best = acc_values[-1]
         best_epoch = epoch
         bad_counter = 0
     else:
