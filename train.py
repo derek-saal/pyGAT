@@ -53,7 +53,6 @@ if args.cuda:
 adj, features, labels, idx_train, idx_val, idx_test = gcn_utils.load_data(args.dataset)
 
 # Model and optimizer
-
 if args.model == 'GAT':
     model = GAT(nfeat=features.shape[1],
                 nhid=args.hidden,
@@ -81,7 +80,7 @@ if args.cuda:
     idx_train = idx_train.cuda()
     idx_val = idx_val.cuda()
     idx_test = idx_test.cuda()
-    
+
 
 def train(epoch):
     t = time.time()

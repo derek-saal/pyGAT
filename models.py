@@ -33,6 +33,15 @@ class GCN(nn.Module):
 
     def forward(self, x, adj):
         x = F.relu(self.gc1(x, adj))
-        x = F.dropout(x, self.dropout, training=self.training)
+        degs = adj.ceil().sum(dim=1)
+        for i in range(x.shape[0]):
+            p = (degs[i] * self.dropout).item()
+            x[i, :] = F.dropout(x[i, :], p=p, training=self.training)
         x = self.gc2(x, adj)
         return F.log_softmax(x, dim=1)
+
+    # def forward(self, x, adj):
+    #     x = F.relu(self.gc1(x, adj))
+    #     x = F.dropout(x, self.dropout, training=self.training)
+    #     x = self.gc2(x, adj)
+    #     return F.log_softmax(x, dim=1)
