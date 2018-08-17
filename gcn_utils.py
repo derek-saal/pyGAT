@@ -42,6 +42,8 @@ def load_data(dataset_str):
     :param dataset_str: Dataset name
     :return: All data input files loaded (as well the training/test data).
     """
+    print("Loading the {} dataset...".format(dataset_str), end=' ')
+
     names = ['x', 'y', 'tx', 'ty', 'allx', 'ally', 'graph']
     objects = []
     for i in range(len(names)):
@@ -87,6 +89,8 @@ def load_data(dataset_str):
     idx_train = torch.LongTensor(idx_train)
     idx_val = torch.LongTensor(idx_val)
     idx_test = torch.LongTensor(idx_test)
+
+    print("done.")
 
     return adj, features, labels, idx_train, idx_val, idx_test
 
