@@ -33,7 +33,7 @@ parser.add_argument('--alpha', type=float, default=0.2, help='Alpha for the leak
 parser.add_argument('--patience', type=int, default=100, help='Patience')
 
 # For GCN
-# args = parser.parse_args(['--hidden', '16'])
+# args = parser.parse_args(['--hidden', '16', '--dataset', 'cora'])
 args = parser.parse_args()
 
 args.cuda = not args.no_cuda and torch.cuda.is_available()

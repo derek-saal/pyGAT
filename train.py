@@ -71,6 +71,8 @@ else:
 
 optimizer = optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
 
+features, adj, labels = Variable(features), Variable(adj), Variable(labels)
+
 if args.cuda:
     model.cuda()
     features = features.cuda()
@@ -79,9 +81,7 @@ if args.cuda:
     idx_train = idx_train.cuda()
     idx_val = idx_val.cuda()
     idx_test = idx_test.cuda()
-
-features, adj, labels = Variable(features), Variable(adj), Variable(labels)
-
+    
 
 def train(epoch):
     t = time.time()
