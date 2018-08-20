@@ -11,36 +11,32 @@ import torch.optim as optim
 import os
 import glob
 from torch.autograd import Variable
-import matplotlib.pyplot as plt
 
+import gcn_utils
 from utils import load_data, accuracy
-from models import GAT
+from models import GAT, GCN
+
+import matplotlib.pyplot as plt
 
 # Training settings
 parser = argparse.ArgumentParser()
-parser.add_argument('--no-cuda', action='store_true', default=False,
-                    help='Disables CUDA training.')
-parser.add_argument('--fastmode', action='store_true', default=False,
-                    help='Validate during training pass.')
+parser.add_argument('--model', type=str, default='GCN', help='GAT or GCN.')
+parser.add_argument('--dataset', type=str, default='cora', help='GAT or GCN.')
+parser.add_argument('--no-cuda', action='store_true', default=False, help='Disables CUDA training.')
+parser.add_argument('--fastmode', action='store_true', default=False, help='Validate during training pass.')
 parser.add_argument('--seed', type=int, default=42, help='Random seed.')
-parser.add_argument('--epochs', type=int, default=10000,
-                    help='Number of epochs to train.')
-parser.add_argument('--lr', type=float, default=0.005,
-                    help='Initial learning rate.')
-parser.add_argument('--weight_decay', type=float, default=5e-4,
-                    help='Weight decay (L2 loss on parameters).')
-parser.add_argument('--hidden', type=int, default=8,
-                    help='Number of hidden units.')
-parser.add_argument('--nb_heads', type=int, default=8,
-                    help='Number of head attentions.')
-parser.add_argument('--dropout', type=float, default=0.6,
-                    help='Dropout rate (1 - keep probability).')
-parser.add_argument('--alpha', type=float, default=0.2,
-                    help='Alpha for the leaky_relu.')
+parser.add_argument('--epochs', type=int, default=10000, help='Number of epochs to train.')
+parser.add_argument('--lr', type=float, default=0.005, help='Initial learning rate.')
+parser.add_argument('--weight_decay', type=float, default=5e-4, help='Weight decay (L2 loss on parameters).')
+parser.add_argument('--hidden', type=int, default=8, help='Number of hidden units.')
+parser.add_argument('--nb_heads', type=int, default=8, help='Number of head attentions.')
+parser.add_argument('--dropout', type=float, default=0.6, help='Dropout rate (1 - keep probability).')
+parser.add_argument('--alpha', type=float, default=0.2, help='Alpha for the leaky_relu.')
 parser.add_argument('--patience', type=int, default=100, help='Patience')
 
+# For GCN
+args = parser.parse_args(['--hidden', '16', '--dataset', 'pubmed'])
 # args = parser.parse_args()
-args = parser.parse_args([])
 
 args.cuda = not args.no_cuda and torch.cuda.is_available()
 
@@ -51,14 +47,25 @@ if args.cuda:
     torch.cuda.manual_seed(args.seed)
 
 # Load data
-adj, features, labels, idx_train, idx_val, idx_test = load_data()
+adj, features, labels, idx_train, idx_val, idx_test = gcn_utils.load_data(args.dataset)
 
 # Model and optimizer
-model = GAT(nfeat=features.shape[1], nhid=args.hidden,
-            nclass=int(labels.max()) + 1, dropout=args.dropout,
-            nheads=args.nb_heads, alpha=args.alpha)
-optimizer = optim.Adam(model.parameters(), lr=args.lr,
-                       weight_decay=args.weight_decay)
+if args.model == 'GAT':
+    model = GAT(nfeat=features.shape[1],
+                nhid=args.hidden,
+                nclass=int(labels.max()) + 1,
+                dropout=args.dropout,
+                nheads=args.nb_heads,
+                alpha=args.alpha)
+elif args.model == 'GCN':
+    model = GCN(nfeat=features.shape[1],
+                nhid=args.hidden,
+                nclass=int(labels.max()) + 1,
+                dropout=args.dropout)
+else:
+    raise ValueError("Model {} not registered".format(args.model))
+
+optimizer = optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
 
 if args.cuda:
     model.cuda()
@@ -73,12 +80,7 @@ features, adj, labels = Variable(features), Variable(adj), Variable(labels)
 
 
 def compute_test():
-    # Restore best model
-    best_epoch = 754
-    print('Loading {}th epoch...'.format(best_epoch))
-    model.load_state_dict(torch.load('{}.pkl'.format(best_epoch), map_location='cpu'))
     model.eval()
-    # Compute accuracy
     output = model(features, adj)
     loss_test = F.nll_loss(output[idx_test], labels[idx_test])
     acc_test = accuracy(output[idx_test], labels[idx_test])
@@ -87,11 +89,29 @@ def compute_test():
           "accuracy= {:.4f}".format(acc_test.data.item()))
 
 
+# Load model
+filename = glob.glob('{}_{}_*.pkl'.format(model._get_name(), args.dataset))[0]
+print("Loading {}...".format(filename))
+if args.cuda:
+    model_location = 'cuda'
+else:
+    model_location = 'cpu'
+state_dict = torch.load(filename, map_location=model_location)
+model.load_state_dict(state_dict)
+model.eval()
+print('Loaded {}.'.format(filename))
+
+
 def accuracy_per_node_degree():
     # Restore best model
-    best_epoch = 754
-    print('Loading {}th epoch...'.format(best_epoch))
-    model.load_state_dict(torch.load('{}.pkl'.format(best_epoch), map_location='cpu'))
+    filename = glob.glob('{}_{}_*.pkl'.format(model._get_name(), args.dataset))[0]
+    print("Loading {}...".format(filename))
+    if args.cuda:
+        model_location = 'cuda'
+    else:
+        model_location = 'cpu'
+    state_dict = torch.load(filename, map_location=model_location)
+    model.load_state_dict(state_dict)
     model.eval()
 
     # Compute preds
@@ -121,19 +141,3 @@ compute_test()
 
 plt.scatter(unique_degrees, correct_sores)
 plt.show()
-
-"""
-correct_sores = [0.76506024, 0.81818182, 0.86956522, 0.83673469, 0.90566038,
-                 0.83928571, 0.89189189, 0.92857143, 0.8       , 0.9375    ,
-                 0.85714286, 0.85714286, 1.        , 1.        , 1.        ,
-                 0.        , 1.        , 0.5       , 1.        , 1.        ,
-                 1.        , 1.        , 0.5       , 1.        , 1.        ,
-                 0.        , 1.        , 1.        , 1.        , 1.        ]
-"""
-
-correct_sores = [0.76506024, 0.81818182, 0.86956522, 0.83673469, 0.90566038,
-                 0.83928571, 0.89189189, 0.92857143, 0.8       , 0.9375    ,
-                 0.85714286, 0.85714286, 1.        , 1.        , 1.        ,
-                 0.        , 1.        , 0.5       , 1.        , 1.        ,
-                 1.        , 1.        , 0.5       , 1.        , 1.        ,
-                 0.        , 1.        , 1.        , 1.        , 1.        ]

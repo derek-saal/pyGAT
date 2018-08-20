@@ -102,6 +102,7 @@ def accuracy_per_node_degree():
 
     # Perform experiment
     unique_degrees = np.unique(degrees)
+
     degree_counter = np.zeros(len(unique_degrees))
     correct_counter = np.zeros(len(unique_degrees))
     degree_to_index = dict((k, v) for k, v in zip(np.unique(degrees), range(len(unique_degrees))))
@@ -122,18 +123,3 @@ compute_test()
 plt.scatter(unique_degrees, correct_sores)
 plt.show()
 
-"""
-correct_sores = [0.76506024, 0.81818182, 0.86956522, 0.83673469, 0.90566038,
-                 0.83928571, 0.89189189, 0.92857143, 0.8       , 0.9375    ,
-                 0.85714286, 0.85714286, 1.        , 1.        , 1.        ,
-                 0.        , 1.        , 0.5       , 1.        , 1.        ,
-                 1.        , 1.        , 0.5       , 1.        , 1.        ,
-                 0.        , 1.        , 1.        , 1.        , 1.        ]
-"""
-
-correct_sores = [0.76506024, 0.81818182, 0.86956522, 0.83673469, 0.90566038,
-                 0.83928571, 0.89189189, 0.92857143, 0.8       , 0.9375    ,
-                 0.85714286, 0.85714286, 1.        , 1.        , 1.        ,
-                 0.        , 1.        , 0.5       , 1.        , 1.        ,
-                 1.        , 1.        , 0.5       , 1.        , 1.        ,
-                 0.        , 1.        , 1.        , 1.        , 1.        ]
