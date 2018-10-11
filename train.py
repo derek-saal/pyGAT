@@ -24,15 +24,15 @@ python3 train.py --model GCN --dataset pubmed --epochs 10000 --lr 0.01 --weight_
 
 # Training settings
 parser = argparse.ArgumentParser()
-parser.add_argument('--model', type=str, default='GCN', help='GAT or GCN.')
-parser.add_argument('--dataset', type=str, default='cora', help='GAT or GCN.')
+parser.add_argument('--model', type=str, default='GAT', help='GAT or GCN.')
+parser.add_argument('--dataset', type=str, default='pubmed', help='cora citeseer pubmed')
 parser.add_argument('--no-cuda', action='store_true', default=False, help='Disables CUDA training.')
 parser.add_argument('--fastmode', action='store_true', default=False, help='Validate during training pass.')
 parser.add_argument('--seed', type=int, default=42, help='Random seed.')
 parser.add_argument('--epochs', type=int, default=10000, help='Number of epochs to train.')
 parser.add_argument('--lr', type=float, default=0.005, help='Initial learning rate.')
 parser.add_argument('--weight_decay', type=float, default=5e-4, help='Weight decay (L2 loss on parameters).')
-parser.add_argument('--hidden', type=int, default=8, help='Number of hidden units.')
+parser.add_argument('--hidden', type=int, default=7, help='Number of hidden units.')
 parser.add_argument('--nb_heads', type=int, default=8, help='Number of head attentions.')
 parser.add_argument('--dropout', type=float, default=0.6, help='Dropout rate (1 - keep probability).')
 parser.add_argument('--alpha', type=float, default=0.2, help='Alpha for the leaky_relu.')
@@ -68,7 +68,7 @@ elif args.model == 'GCN':
 else:
     raise ValueError("Model {} not registered".format(args.model))
 
-optimizer = optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+optimizer = optim.Adadelta(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
 
 features, adj, labels = Variable(features), Variable(adj), Variable(labels)
 
@@ -109,6 +109,9 @@ def train(epoch):
 
     return loss_val.data.item()
 
+
+# Verify which device is in use
+print(f"Device: {torch.cuda.get_device_name(0)}")
 
 # Train model
 t_total = time.time()
