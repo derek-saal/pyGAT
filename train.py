@@ -50,7 +50,7 @@ if args.cuda:
     torch.cuda.manual_seed(args.seed)
 
 # Load data
-if args.dataset != '20ng':
+if args.dataset in 'cora citeseer pubmed'.split():
     adj, features, labels, idx_train, idx_val, idx_test = gcn_utils.load_data(args.dataset)
 else:
     adj, features, labels, idx_train, idx_val, idx_test = gcn_utils.load_corpus(args.dataset)
