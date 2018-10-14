@@ -25,7 +25,7 @@ python3 train.py --model GCN --dataset pubmed --epochs 10000 --lr 0.01 --weight_
 # Training settings
 parser = argparse.ArgumentParser()
 parser.add_argument('--model', type=str, default='GAT', help='GAT or GCN.')
-parser.add_argument('--dataset', type=str, default='pubmed', help='cora citeseer pubmed')
+parser.add_argument('--dataset', type=str, default='20ng', help='cora citeseer pubmed')
 parser.add_argument('--no-cuda', action='store_true', default=False, help='Disables CUDA training.')
 parser.add_argument('--fastmode', action='store_true', default=False, help='Validate during training pass.')
 parser.add_argument('--seed', type=int, default=42, help='Random seed.')
@@ -50,7 +50,10 @@ if args.cuda:
     torch.cuda.manual_seed(args.seed)
 
 # Load data
-adj, features, labels, idx_train, idx_val, idx_test = gcn_utils.load_data(args.dataset)
+if args.dataset != '20ng':
+    adj, features, labels, idx_train, idx_val, idx_test = gcn_utils.load_data(args.dataset)
+else:
+    adj, features, labels, idx_train, idx_val, idx_test = gcn_utils.load_corpus(args.dataset)
 
 # Model and optimizer
 if args.model == 'GAT':
@@ -111,7 +114,7 @@ def train(epoch):
 
 
 # Verify which device is in use
-print(f"Device: {torch.cuda.get_device_name(0)}")
+# print(f"Device: {torch.cuda.get_device_name(0)}")
 
 # Train model
 t_total = time.time()
