@@ -42,7 +42,7 @@ def load_data(dataset_str):
     :param dataset_str: Dataset name
     :return: All data input files loaded (as well the training/test data).
     """
-    print("Loading the {} dataset...".format(dataset_str), end=' ')
+    print("Loading the {} dataset...".format(dataset_str))
 
     names = ['x', 'y', 'tx', 'ty', 'allx', 'ally', 'graph']
 
