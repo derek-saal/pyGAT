@@ -119,7 +119,7 @@ def load_corpus(dataset_str):
     names = ['x', 'y', 'tx', 'ty', 'allx', 'ally', 'adj']
     objects = []
     for i in range(len(names)):
-        with open("../text_gcn/data/ind.{}.{}".format(dataset_str, names[i]), 'rb') as f:
+        with open("data/ind.{}.{}".format(dataset_str, names[i]), 'rb') as f:
             if sys.version_info > (3, 0):
                 objects.append(pkl.load(f, encoding='latin1'))
             else:
@@ -133,7 +133,7 @@ def load_corpus(dataset_str):
     print(len(labels))
 
     train_idx_orig = parse_index_file(
-        "../text_gcn/data/{}.train.index".format(dataset_str))
+        "data/{}.train.index".format(dataset_str))
     train_size = len(train_idx_orig)
 
     val_size = train_size - x.shape[0]
