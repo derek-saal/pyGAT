@@ -22,6 +22,53 @@ def sample_mask(idx, l):
     return np.array(mask, dtype=np.bool)
 
 
+def mr_load_data():
+    dataset_str = 'mr'
+    names = ['x', 'y', 'tx', 'ty', 'allx', 'ally', 'adj']
+    objects = []
+    for i in range(len(names)):
+        with open("mr_data/ind.{}.{}".format(dataset_str, names[i]), 'rb') as f:
+            objects.append(pkl.load(f, encoding='latin1'))
+
+    x, y, tx, ty, allx, ally, adj = tuple(objects)
+    features = sp.vstack((allx, tx)).tolil()
+    labels = np.vstack((ally, ty))
+
+    train_idx_orig = parse_index_file(
+        "mr_data/{}.train.index".format(dataset_str))
+    train_size = len(train_idx_orig)
+
+    val_size = train_size - x.shape[0]
+    test_size = tx.shape[0]
+
+    idx_train = range(len(y))
+    idx_val = range(len(y), len(y) + val_size)
+    idx_test = range(allx.shape[0], allx.shape[0] )
+
+    idx_train = torch.LongTensor(idx_train)
+    idx_val = torch.LongTensor(idx_val)
+    idx_test = torch.LongTensor(idx_test)+ test_size
+
+    # build symmetric adjacency matrix
+    adj = adj + adj.T.multiply(adj.T > adj) - adj.multiply(adj.T > adj)
+    adj = normalize_adj(adj + sp.eye(adj.shape[0]))
+    adj = torch.FloatTensor(np.array(adj.todense()))
+
+    features = preprocess_features(features)
+    features = torch.FloatTensor(np.array(features.todense()))
+
+    labels = torch.LongTensor(np.where(labels)[1])
+    return adj, features, labels, idx_train, idx_val, idx_test
+
+
+def parse_index_file(filename):
+    """Parse index file."""
+    index = []
+    for line in open(filename):
+        index.append(int(line.strip()))
+    return index
+
+
 def load_data(dataset_str):
     """
     Loads input data from gcn/data directory
@@ -46,6 +93,9 @@ def load_data(dataset_str):
 
     names = ['x', 'y', 'tx', 'ty', 'allx', 'ally', 'graph']
 
+    if dataset_str == 'mr':
+        return mr_load_data()
+
     objects = []
     for i in range(len(names)):
         with open("data/ind.{}.{}".format(dataset_str, names[i]), 'rb') as f:
@@ -55,6 +105,7 @@ def load_data(dataset_str):
                 objects.append(pkl.load(f))
 
     x, y, tx, ty, allx, ally, graph = tuple(objects)
+    print(x.shape, y.shape, tx.shape, ty.shape, allx.shape, ally.shape)
     test_idx_reorder = parse_index_file("data/ind.{}.test.index".format(dataset_str))
     test_idx_range = np.sort(test_idx_reorder)
 
@@ -116,6 +167,8 @@ def load_corpus(dataset_str):
     :return: All data input files loaded (as well the training/test data).
     """
 
+    if dataset_str == 'mr':
+        return mr_load_data()
     names = ['x', 'y', 'tx', 'ty', 'allx', 'ally', 'adj']
     objects = []
     for i in range(len(names)):
