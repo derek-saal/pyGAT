@@ -32,7 +32,7 @@ class GraphAttentionLayer(nn.Module):
         h = torch.mm(input, self.W)
         N = h.size()[0]
 
-        print(f'self.a\'s shape is {self.a.size()}')
+        # print(f'self.a\'s shape is {self.a.size()}')
         a_input = torch.cat([h.repeat(1, N).view(N * N, -1), h.repeat(N, 1)], dim=1).view(N, -1, 2 * self.out_features)
         e = self.leakyrelu(torch.matmul(a_input, self.a).squeeze(2))
 

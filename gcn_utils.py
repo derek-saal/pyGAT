@@ -41,9 +41,12 @@ def mr_load_data():
     val_size = train_size - x.shape[0]
     test_size = tx.shape[0]
 
-    idx_train = range(len(y))
-    idx_val = range(len(y), len(y) + val_size)
-    idx_test = range(allx.shape[0], allx.shape[0] )
+    idx_train = range(140)
+    idx_val = range(200, 500)
+    idx_test = range(500, 1500)
+    # idx_train = range(len(y))
+    # idx_val = range(len(y), len(y) + val_size)
+    # idx_test = range(allx.shape[0], allx.shape[0] )
 
     idx_train = torch.LongTensor(idx_train)
     idx_val = torch.LongTensor(idx_val)
