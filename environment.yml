@@ -8,6 +8,7 @@ dependencies:
   - pytest
   - pip:
     - pytorch
+    - pandas
     - torchvision
     - scipy
     - numpy
