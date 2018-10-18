@@ -6,6 +6,7 @@ import scipy.sparse as sp
 from math import log
 from __init__ import data_dir
 import pandas as pd
+from collections import defaultdict
 
 module_logger = logging.getLogger('pygat.build_graph')
 
@@ -23,83 +24,19 @@ def build_graph(dataset):
     df_info = pd.read_csv(data_dir/'ids_and_labels.txt', sep='\t', header=None, names=['id', 'test_train', 'label'])
     df_data = pd.read_csv(data_dir/'clean_filtered.txt', sep='\t', header=None, names=['text'])
     df = pd.concat([df_info, df_data], axis=1)
-    with open(data_dir/'ids_and_labels.txt', 'r') as f:
-        module_logger.info(f"Reading {f.name} for {dataset}")
-        for line in f.readlines():
-            assert len(line) > 0, f"Empty Line"
-            corpus_name_list.append(line.strip())
-            id, test_train, label = line.split("\t")
-            if test_train == 'test':
-                corpus_test_list.append(line.strip())
-            elif test_train == 'train':
-                corpus_train_list.append(line.strip())
-            else:
-                raise ValueError(f"Line (printed below) did not contain test or train\n{line}")
+    df.text = df.text.apply(str)
 
-    clean_corpus_list = []
-
-    with open(data_dir/'clean_filtered.txt', 'r') as f:
-        module_logger.info(f"Reading {f.name} for {dataset}")
-        for line in f.readlines():
-            clean_corpus_list.append(line.strip())
-
-    def build_id_list(corpus_list, id_type):
-        """
-        Will take a corpus list and perform:
-            shuffling
-            file writing
-        :param corpus_list:
-        :param id_type:
-        :return:
-        """
-        ids = []
-        module_logger.info(f"Building {id_type}ing ID list...")
-        for name in corpus_list:
-            # list.index finds first index of arg
-            train_id = corpus_name_list.index(name)
-            ids.append(train_id)
-        random.shuffle(ids)
-
-        ids_str = '\n'.join(str(index) for index in ids)
-        with open(data_dir/f'{id_type}_ids.txt', 'w') as f:
-            module_logger.info(f"Writing {id_type}ing ID list to {f.name}")
-            f.write(ids_str)
-        module_logger.info(f"Total number of {id_type}ing IDs: {len(ids)}")
-        return ids
-
-    train_ids = build_id_list(corpus_train_list, 'train')
-    test_ids = build_id_list(corpus_test_list, 'test')
-
-    ids = train_ids + test_ids
-    module_logger.info(f"Total number of IDs: {len(ids)}")
-
-    shuffle_doc_name_list = []
-    shuffle_doc_words_list = []
-    module_logger.info(f"Shuffling names and corpus")
-    for id in ids:
-        shuffle_doc_name_list.append(corpus_name_list[int(id)])
-        shuffle_doc_words_list.append(clean_corpus_list[int(id)])
-    shuffle_doc_name_str = '\n'.join(shuffle_doc_name_list)
-    shuffle_doc_words_str = '\n'.join(shuffle_doc_words_list)
-
-    with open(data_dir/'name_shuffle.txt', 'w') as f:
-        module_logger.info(f"Writing shuffled names to: {f.name}")
-        f.write(shuffle_doc_name_str)
-
-    with open(data_dir/'doc_words_shuffle.txt', 'w') as f:
-        module_logger.info(f"Writing shuffled corpus to: {f.name}")
-        f.write(shuffle_doc_words_str)
 
     # build vocab
-    word_freq = {}
+    word_freq = defaultdict(int)
     module_logger.info(f"Building vocab")
-    for doc_words in shuffle_doc_words_list:
-        words = doc_words.split()
+
+    def get_words(cell):
+        words = cell.split()
         for word in words:
-            if word in word_freq:
-                word_freq[word] += 1
-            else:
-                word_freq[word] = 1
+            word_freq[word] += 1
+    df.text.apply(get_words)
+    word_freq = dict(word_freq)
 
     vocab = list(word_freq.keys())
     vocab_size = len(vocab)
@@ -120,87 +57,19 @@ def build_graph(dataset):
                 word_doc_list[word] = [i]
             appeared.add(word)
 
-    word_doc_freq = {}
-    for word, doc_list in word_doc_list.items():
-        word_doc_freq[word] = len(doc_list)
+    # word_doc_freq = {}
+    # for word, doc_list in word_doc_list.items():
+    #     word_doc_freq[word] = len(doc_list)
 
     word_id_map = {}
-    for i in range(vocab_size):
-        word_id_map[vocab[i]] = i
+    for i,vocab_word in enumerate(vocab):
+        word_id_map[vocab_word] = i
 
-    vocab_str = '\n'.join(vocab)
-
-    with open(data_dir/'vocab.txt', 'w') as f:
-        module_logger.info(f"Writing vocab to: {f.name}")
-        f.write(vocab_str)
-
-    '''
-    Word definitions begin
-    '''
-    '''
-    definitions = []
-
-    for word in vocab:
-        word = word.strip()
-        synsets = wn.synsets(clean_str(word))
-        word_defs = []
-        for synset in synsets:
-            syn_def = synset.definition()
-            word_defs.append(syn_def)
-        word_des = ' '.join(word_defs)
-        if word_des == '':
-            word_des = '<PAD>'
-        definitions.append(word_des)
-
-    string = '\n'.join(definitions)
-
-
-    f = open('data/corpus/' + dataset + '_vocab_def.txt', 'w')
-    f.write(string)
-    f.close()
-
-    tfidf_vec = TfidfVectorizer(max_features=1000)
-    tfidf_matrix = tfidf_vec.fit_transform(definitions)
-    tfidf_matrix_array = tfidf_matrix.toarray()
-    print(tfidf_matrix_array[0], len(tfidf_matrix_array[0]))
-
-    word_vectors = []
-
-    for i in range(len(vocab)):
-        word = vocab[i]
-        vector = tfidf_matrix_array[i]
-        str_vector = []
-        for j in range(len(vector)):
-            str_vector.append(str(vector[j]))
-        temp = ' '.join(str_vector)
-        word_vector = word + ' ' + temp
-        word_vectors.append(word_vector)
-
-    string = '\n'.join(word_vectors)
-
-    f = open('data/corpus/' + dataset + '_word_vectors.txt', 'w')
-    f.write(string)
-    f.close()
-
-    word_vector_file = 'data/corpus/' + dataset + '_word_vectors.txt'
-    _, embd, word_vector_map = loadWord2Vec(word_vector_file)
-    word_embeddings_dim = len(embd[0])
-    '''
-
-    '''
-    Word definitions end
-    '''
-
-    # label list
-    label_set = set()
-    for doc_meta in shuffle_doc_name_list:
-        temp = doc_meta.split('\t')
-        label_set.add(temp[2])
-    label_list = list(label_set)
-
-    label_list_str = '\n'.join(label_list)
-    with open(data_dir/'labels.txt', 'w') as f:
-        f.write(label_list_str)
+    # vocab_str = '\n'.join(vocab)
+    #
+    # with open(data_dir/'vocab.txt', 'w') as f:
+    #     module_logger.info(f"Writing vocab to: {f.name}")
+    #     f.write(vocab_str)
 
     # x: feature vectors of training docs, no initial features
     # slect 90% training set

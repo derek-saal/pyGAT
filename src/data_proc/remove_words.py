@@ -67,19 +67,22 @@ def remove_words():
     line_count = 0
     with open(data_dir / 'clean_filtered.txt', 'r') as f:
         module_logger.info(f"Calculating document min_len, max_len, and average_len for cleaned and filtered corpus...")
-        for line in f.readlines():
-            line_count += 1
+        for i, line in enumerate(f.readlines()):
+            line_len = len(line)
+            if line_len == 0:
+                module_logger.warning(f"Line number {i} has a len of 0")
+                # continue
             line = line.strip()
             temp = line.split()
             aver_len = aver_len + len(temp)  # aver_len is actually total_words
-            if len(temp) < min_len:
-                min_len = len(temp)
-            if len(temp) > max_len:
-                max_len = len(temp)
+            min_len = min(line_len, min_len)
+            max_len = max(line_len, max_len)
+            line_count += 1
     aver_len = aver_len / line_count
     module_logger.info('\tmin_len : ' + str(min_len))
     module_logger.info('\tmax_len : ' + str(max_len))
     module_logger.info('\taverage_len : ' + str(aver_len))
+    module_logger.info('\tTotal Lines : ' + str(line_count))
 
 
 if __name__ == '__main__':
