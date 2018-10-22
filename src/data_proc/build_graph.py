@@ -21,6 +21,7 @@ def build_graph(dataset):
     df = pd.concat([df_info, df_data], axis=1)
     df.text = df.text.apply(str)
     df.sample(frac=1).reset_index(drop=True)
+    pd.to_pickle(df, data_dir/'df.pkl')
     train_size = len(df[df.test_train == 'train'])
     test_size = len(df[df.test_train == 'test'])
 

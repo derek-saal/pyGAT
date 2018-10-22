@@ -5,6 +5,7 @@ import scipy.sparse as sp
 from scipy.sparse.linalg.eigen.arpack import eigsh
 import sys
 import torch
+import pandas as pd
 
 
 def parse_index_file(filename):
@@ -36,8 +37,8 @@ def mr_load_data():
     features = sp.vstack((allx, tx)).tolil()
     labels = np.vstack((ally, ty))
 
-    train_idx_orig = parse_index_file(
-        "mr_data/{}.train.index".format(dataset_str))
+    df = pd.read_pickle(f"mr_data/df.pkl")
+    train_idx_orig = list(df.test_train[df.test_train == 'train'])
     train_size = len(train_idx_orig)
 
     val_size = train_size - x.shape[0]
