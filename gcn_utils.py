@@ -26,8 +26,8 @@ def mr_load_data():
     dataset_str = 'mr'
     names = ['x', 'y', 'tx', 'ty', 'allx', 'ally']
     objects = []
-    for i in range(len(names)):
-        with open("mr_data/ind.{}.{}".format(dataset_str, names[i]), 'rb') as f:
+    for name in names:
+        with open(f"mr_data/ind_{name}.pkl", 'rb') as f:
             objects.append(pkl.load(f, encoding='latin1'))
     with open('mr_data/adj.pkl', 'rb') as f:
         objects.append(pkl.load(f, encoding='latin1'))
