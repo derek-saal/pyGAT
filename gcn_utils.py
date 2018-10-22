@@ -24,11 +24,13 @@ def sample_mask(idx, l):
 
 def mr_load_data():
     dataset_str = 'mr'
-    names = ['x', 'y', 'tx', 'ty', 'allx', 'ally', 'adj']
+    names = ['x', 'y', 'tx', 'ty', 'allx', 'ally']
     objects = []
     for i in range(len(names)):
         with open("mr_data/ind.{}.{}".format(dataset_str, names[i]), 'rb') as f:
             objects.append(pkl.load(f, encoding='latin1'))
+    with open('mr_data/adj.pkl', 'rb') as f:
+        objects.append(pkl.load(f, encoding='latin1'))
 
     x, y, tx, ty, allx, ally, adj = tuple(objects)
     features = sp.vstack((allx, tx)).tolil()
@@ -41,16 +43,16 @@ def mr_load_data():
     val_size = train_size - x.shape[0]
     test_size = tx.shape[0]
 
-    idx_train = range(140)
-    idx_val = range(200, 500)
-    idx_test = range(500, 1500)
-    # idx_train = range(len(y))
-    # idx_val = range(len(y), len(y) + val_size)
-    # idx_test = range(allx.shape[0], allx.shape[0] )
+    # idx_train = range(140)
+    # idx_val = range(200, 500)
+    # idx_test = range(500, 1500)
+    idx_train = range(len(y))
+    idx_val = range(len(y), len(y) + val_size)
+    idx_test = range(allx.shape[0], allx.shape[0])
 
     idx_train = torch.LongTensor(idx_train)
     idx_val = torch.LongTensor(idx_val)
-    idx_test = torch.LongTensor(idx_test)+ test_size
+    idx_test = torch.LongTensor(idx_test) + test_size
 
     # build symmetric adjacency matrix
     adj = adj + adj.T.multiply(adj.T > adj) - adj.multiply(adj.T > adj)
