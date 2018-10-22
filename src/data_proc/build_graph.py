@@ -20,6 +20,9 @@ def build_graph(dataset):
     df_data = pd.read_csv(data_dir/'clean_filtered.txt', sep='\t', header=None, names=['text'])
     df = pd.concat([df_info, df_data], axis=1)
     df.text = df.text.apply(str)
+    df.sample(frac=1).reset_index(drop=True)
+    train_size = len(df[df.test_train == 'train'])
+    test_size = len(df[df.test_train == 'test'])
 
     def build_windows(text, window_size=20):
         windows = []
@@ -51,14 +54,13 @@ def build_graph(dataset):
             appeared.add(window_word)
 
     vocab = set()
-    vocab_size = len(vocab)
     module_logger.info(f"Building Vocab...")
     for window in windows:
         for window_word in window:
             vocab.add(window_word)
     vocab = list(vocab)
+    vocab_size = len(vocab)
     module_logger.info(f"\tVocab length: {len(vocab)}")
-
 
     def create_word_doc_list(series):
         """
@@ -121,7 +123,7 @@ def build_graph(dataset):
     weight = []
     num_window = len(windows)
 
-    module_logger(f"Calculating PMI...")
+    module_logger.info(f"Calculating PMI...")
     for key in word_pair_count:
         temp = key.split(',')
         i = int(temp[0])
@@ -133,10 +135,8 @@ def build_graph(dataset):
                   (1.0 * word_freq_i * word_freq_j/(num_window * num_window)))
         if pmi <= 0:
             continue
-        # ToDo figure out how this works
-        # weights.append()
-        # row.append(train_size + i)
-        # col.append(train_size + j)
+        row.append(train_size + i)
+        col.append(train_size + j)
         weight.append(pmi)
 
 
@@ -175,6 +175,9 @@ def build_graph(dataset):
     node_size = train_size + vocab_size + test_size
     adj = sp.csr_matrix(
         (weight, (row, col)), shape=(node_size, node_size))
+
+    with open(data_dir/'adj.pkl', 'wb') as f:
+        pkl.dump(adj, f)
 
 
 if __name__ == '__main__':
