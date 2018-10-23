@@ -23,6 +23,48 @@ def sample_mask(idx, l):
     return np.array(mask, dtype=np.bool)
 
 
+def gcn_text_mr_load_data():
+    dataset_str = 'mr'
+    names = ['x', 'y', 'tx', 'ty', 'allx', 'ally', 'adj']
+    objects = []
+    for name in names:
+        with open(f"text_gcn_mr_data/ind_{name}.pkl", 'rb') as f:
+            objects.append(pkl.load(f, encoding='latin1'))
+
+    x, y, tx, ty, allx, ally, adj = tuple(objects)
+    features = sp.vstack((allx, tx)).tolil()
+    labels = np.vstack((ally, ty))
+
+    train_idx_orig = parse_index_file(
+        "text_gcn_mr_data/mr.train.index")
+    train_size = len(train_idx_orig)
+
+    val_size = train_size - x.shape[0]
+    test_size = tx.shape[0]
+
+    idx_train = range(140)
+    idx_val = range(200, 500)
+    idx_test = range(500, 1500)
+    # idx_train = range(len(y))
+    # idx_val = range(len(y), len(y) + val_size)
+    # idx_test = range(allx.shape[0], allx.shape[0])
+
+    idx_train = torch.LongTensor(idx_train)
+    idx_val = torch.LongTensor(idx_val)
+    idx_test = torch.LongTensor(idx_test) + test_size
+
+    # build symmetric adjacency matrix
+    adj = adj + adj.T.multiply(adj.T > adj) - adj.multiply(adj.T > adj)
+    adj = normalize_adj(adj + sp.eye(adj.shape[0]))
+    adj = torch.FloatTensor(np.array(adj.todense()))
+
+    features = preprocess_features(features)
+    features = torch.FloatTensor(np.array(features.todense()))
+
+    labels = torch.LongTensor(np.where(labels)[1])
+    return adj, features, labels, idx_train, idx_val, idx_test
+
+
 def mr_load_data():
     dataset_str = 'mr'
     names = ['x', 'y', 'tx', 'ty', 'allx', 'ally', 'adj']
@@ -30,8 +72,6 @@ def mr_load_data():
     for name in names:
         with open(f"mr_data/ind_{name}.pkl", 'rb') as f:
             objects.append(pkl.load(f, encoding='latin1'))
-    # with open('mr_data/adj.pkl', 'rb') as f:
-    #     objects.append(pkl.load(f, encoding='latin1'))
 
     x, y, tx, ty, allx, ally, adj = tuple(objects)
     features = sp.vstack((allx, tx)).tolil()
@@ -44,12 +84,12 @@ def mr_load_data():
     val_size = train_size - x.shape[0]
     test_size = tx.shape[0]
 
-    # idx_train = range(140)
-    # idx_val = range(200, 500)
-    # idx_test = range(500, 1500)
-    idx_train = range(len(y))
-    idx_val = range(len(y), len(y) + val_size)
-    idx_test = range(allx.shape[0], allx.shape[0])
+    idx_train = range(140)
+    idx_val = range(200, 500)
+    idx_test = range(500, 1500)
+    # idx_train = range(len(y))
+    # idx_val = range(len(y), len(y) + val_size)
+    # idx_test = range(allx.shape[0], allx.shape[0])
 
     idx_train = torch.LongTensor(idx_train)
     idx_val = torch.LongTensor(idx_val)
