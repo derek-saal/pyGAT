@@ -28,7 +28,7 @@ def gcn_text_mr_load_data():
     names = ['x', 'y', 'tx', 'ty', 'allx', 'ally', 'adj']
     objects = []
     for name in names:
-        with open(f"text_gcn_mr_data/ind_{name}.pkl", 'rb') as f:
+        with open("text_gcn_mr_data/ind.{}.{}".format(dataset_str, name), 'rb') as f:
             objects.append(pkl.load(f, encoding='latin1'))
 
     x, y, tx, ty, allx, ally, adj = tuple(objects)
