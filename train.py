@@ -52,6 +52,8 @@ if args.cuda:
 # Load data
 if args.dataset in 'cora citeseer pubmed'.split():
     adj, features, labels, idx_train, idx_val, idx_test = gcn_utils.load_data(args.dataset)
+if args.dataset == 'mr':
+    adj, features, labels, idx_train, idx_val, idx_test = gcn_utils.gcn_text_mr_load_data()
 else:
     adj, features, labels, idx_train, idx_val, idx_test = gcn_utils.load_corpus(args.dataset)
 
